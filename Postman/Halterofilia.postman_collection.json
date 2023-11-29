@@ -1,0 +1,168 @@
+{
+	"info": {
+		"_postman_id": "539c48b8-fcb5-428f-9453-16a22292ab33",
+		"name": "Halterofilia",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25366834"
+	},
+	"item": [
+		{
+			"name": "Paso 1 GenerarToken",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"accesstoken\", pm.response.json().access_token);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:44326/api/authentication/GenerarToken",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "44326",
+					"path": [
+						"api",
+						"authentication",
+						"GenerarToken"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Paso 2 AgregarDeportista",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accesstoken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"pais\": \"AUS\",\r\n  \"nombre\": \"Alejandra Ortega\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:44326/api/halterofilia/AgregarDeportista",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "44326",
+					"path": [
+						"api",
+						"halterofilia",
+						"AgregarDeportista"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Paso 3 AgregarResultado",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accesstoken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"Arranque\": 0,\r\n  \"Envion\":150,\r\n  \"totalPeso\": 150,\r\n  \"deportistaId\": 5\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:44326/api/halterofilia/AgregarResultado",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "44326",
+					"path": [
+						"api",
+						"halterofilia",
+						"AgregarResultado"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Paso 4 ObtenerTablaClasificacion",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accesstoken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://localhost:44326/api/halterofilia/ObtenerTablaClasificacion",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "44326",
+					"path": [
+						"api",
+						"halterofilia",
+						"ObtenerTablaClasificacion"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Paso 5 ObtenerIntentosDeportista",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accesstoken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://localhost:44326/api/halterofilia/ObtenerIntentosDeportista",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "44326",
+					"path": [
+						"api",
+						"halterofilia",
+						"ObtenerIntentosDeportista"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
