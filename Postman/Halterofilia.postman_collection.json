@@ -51,7 +51,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"pais\": \"AUS\",\r\n  \"nombre\": \"Alejandra Ortega\"\r\n}",
+					"raw": "{\r\n  \"pais\": \"USA\",\r\n  \"nombre\": \"Alejandra torres\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -87,7 +87,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"Arranque\": 0,\r\n  \"Envion\":150,\r\n  \"totalPeso\": 150,\r\n  \"deportistaId\": 5\r\n}",
+					"raw": "{\r\n  \"Arranque\": 200,\r\n  \"Envion\":200,\r\n  \"totalPeso\": 150,\r\n  \"deportistaId\": 7\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -159,6 +159,84 @@
 						"api",
 						"halterofilia",
 						"ObtenerIntentosDeportista"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Paso 6 Actualizar Deportista Copy",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accesstoken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"id\": 1,\r\n  \"pais\": \"Test\",\r\n  \"nombre\": \"test\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:44326/api/halterofilia/ActualizarDeportista",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "44326",
+					"path": [
+						"api",
+						"halterofilia",
+						"ActualizarDeportista"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Paso 7 Eliminar Deportista",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accesstoken}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:44326/api/halterofilia/EliminarDeportista?id=1",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "44326",
+					"path": [
+						"api",
+						"halterofilia",
+						"EliminarDeportista"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "1"
+						}
 					]
 				}
 			},

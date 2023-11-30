@@ -1,6 +1,14 @@
-using DavidCardenasAPI.Context;
+using DavidCardenasAPI.Business.Interfaces;
+using DavidCardenasAPI.Business.Services;
+using DavidCardenasAPI.Data.Context;
+using DavidCardenasAPI.Data.Interfaces;
+using DavidCardenasAPI.Domain.Models;
+using DavidCardenasAPI.Security.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using WSServicioPichincha.Business.Services;
+using WSServicioPichincha.Data.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
@@ -33,6 +41,17 @@ builder.Services.AddDbContext<HalterofiliaContext>(options =>
     options.UseSqlServer(
     builder.Configuration.GetConnectionString("HalterofiliaContext"));
 });
+
+
+builder.Services.AddTransient<IAuthenticationJwtServices, AuthenticationJwtServices>();
+
+builder.Services.AddTransient<ILogService, LogService>();
+builder.Services.AddTransient<IDeportistasService, DeportistasService>();
+builder.Services.AddTransient<IResultadoService, ResultadoService>();
+
+builder.Services.AddTransient<IRepository<LogApi>, Repository<LogApi>>();
+builder.Services.AddTransient<IRepository<Deportista>, Repository<Deportista>>();
+builder.Services.AddTransient<IRepository<Resultado>, Repository<Resultado>>();
 
 
 var app = builder.Build();

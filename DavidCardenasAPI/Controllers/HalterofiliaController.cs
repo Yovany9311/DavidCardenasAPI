@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
-using DavidCardenasAPI.Context;
-using DavidCardenasAPI.Models;
-using Microsoft.Extensions.Configuration;
-using DavidCardenasAPI.DTOS;
+using DavidCardenasAPI.Business.Interfaces;
+using DavidCardenasAPI.Domain.DTOS;
+using DavidCardenasAPI.Domain.Models;
+using Serilog;
+using DavidCardenasAPI.Data.Context;
+using DavidCardenasAPI.Business.Services;
 
 namespace DavidCardenasAPI.Controllers
 {
@@ -17,43 +17,44 @@ namespace DavidCardenasAPI.Controllers
         private readonly HalterofiliaContext _context;
         private readonly ILogger<HalterofiliaController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IDeportistasService _deportistasService;
+        private readonly ILogService _logService;
+        private readonly IResultadoService _resultadoService;
         bool logToDatabase = false;
         bool logToFile = false;
-        public HalterofiliaController(HalterofiliaContext context, ILogger<HalterofiliaController> logger, IConfiguration configuration)
+        public HalterofiliaController(IDeportistasService deportistasService, ILogService logService, IResultadoService resultadosService, HalterofiliaContext context, ILogger<HalterofiliaController> logger,
+            IConfiguration configuration)
         {
             _context = context;
             _logger = logger;
             _configuration = configuration;
+            _logService = logService;
+            _resultadoService = resultadosService;
             logToDatabase = _configuration.GetValue<bool>("Logging:DatabaseLogEnabled");
             logToFile = _configuration.GetValue<bool>("Logging:TextFileLogEnabled");
+            _deportistasService = deportistasService;
 
         }
 
         [HttpPost("AgregarDeportista")]
-        public ActionResult AgregarDeportista(DTODeportista dtoDeportista)
+        public async Task<ActionResult> AgregarDeportista(DTODeportista dtoDeportista)
         {
             try
             {
-                Deportista deportista = new Deportista()
-                {
-                    Nombre = dtoDeportista.Nombre,
-                    Pais = dtoDeportista.Pais,
-                };
-                _context.Deportistas.Add(deportista);
-                _context.SaveChanges();
+                await _deportistasService.Save(dtoDeportista);
 
                 if (logToFile)
-                    _logger.LogInformation($"Deportista agregado: {deportista.Nombre}");
+                    _logger.LogInformation($"Deportista agregado: {dtoDeportista.Nombre}");
 
                 if (logToDatabase)
                 {
-                    _context.Logs.Add(new Log
+                    LogApi log = new LogApi()
                     {
                         Nivel = "Información",
-                        Mensaje = $"Resultado agregado para el deportista {deportista.Nombre}",
+                        Mensaje = $"Resultado agregado para el deportista {dtoDeportista.Nombre}",
                         Fecha = DateTime.Now
-                    });
-                    _context.SaveChanges();
+                    };
+                    await _logService.Save(log);
                 }
 
                 return Ok(new { Mensaje = "Deportista agregado correctamente" });
@@ -63,20 +64,82 @@ namespace DavidCardenasAPI.Controllers
                 _logger.LogError($"Error al agregar deportista: {ex.Message}");
                 if (logToDatabase)
                 {
-                    _context.Logs.Add(new Log
+                    await _logService.Save(new LogApi
                     {
                         Nivel = "Error",
                         Mensaje = $"Error al agregar resultado: {ex.Message}",
                         Fecha = DateTime.Now
                     });
-                    _context.SaveChanges();
                 }
                 return StatusCode(500, new { Mensaje = "Error interno del servidor" });
             }
         }
 
+        [HttpPut("ActualizarDeportista")]
+        public async Task<ActionResult> ActualizarDeportista(DTODeportista dtoDeportista)
+        {
+            try
+            {
+                await _deportistasService.Update(dtoDeportista);
+
+                if (logToFile)
+                    _logger.LogInformation($"Deportista Actualizado: {dtoDeportista.Nombre}");
+
+                if (logToDatabase)
+                {
+                    LogApi log = new LogApi()
+                    {
+                        Nivel = "Información",
+                        Mensaje = $"Resultado Actualizado para el deportista {dtoDeportista.Nombre}",
+                        Fecha = DateTime.Now
+                    };
+                    await _logService.Save(log);
+                }
+
+                return Ok(new { Mensaje = "Deportista Actualizado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error al Actualizar deportista: {ex.Message}");
+                if (logToDatabase)
+                {
+                    await _logService.Save(new LogApi
+                    {
+                        Nivel = "Error",
+                        Mensaje = $"Error al Actualizar resultado: {ex.Message}",
+                        Fecha = DateTime.Now
+                    });
+                }
+                return StatusCode(500, new { Mensaje = "Error interno del servidor" });
+            }
+        }
+
+        [HttpDelete("EliminarDeportista")]
+        public async Task<IActionResult> EliminarDeportista(int id)
+        {
+            try
+            {
+                return Ok(await _deportistasService.Delete(id));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error al Eliminar deportista: {ex.Message}");
+                if (logToDatabase)
+                {
+                    await _logService.Save(new LogApi
+                    {
+                        Nivel = "Error",
+                        Mensaje = $"Error al Eliminar resultado: {ex.Message}",
+                        Fecha = DateTime.Now
+                    });
+                }
+                return StatusCode(500, new { Mensaje = "Error interno del servidor" });
+            }
+        }
+
+
         [HttpPost("AgregarResultado")]
-        public ActionResult AgregarResultado(DTOResultado dtoResultado)
+        public async Task<ActionResult> AgregarResultado(DTOResultado dtoResultado)
         {
             try
             {
@@ -87,20 +150,20 @@ namespace DavidCardenasAPI.Controllers
                     DeportistaId = dtoResultado.DeportistaId,
                     TotalPeso = dtoResultado.TotalPeso
                 };
-                _context.Resultados.Add(resultado);
-                _context.SaveChanges();
+
+                await _resultadoService.Save(resultado);
                 if (logToFile)
                     _logger.LogInformation($"Resultado agregado para el deportista {resultado.DeportistaId}");
 
                 if (logToDatabase)
                 {
-                    _context.Logs.Add(new Log
+                    LogApi log = new LogApi()
                     {
                         Nivel = "Información",
                         Mensaje = $"Resultado agregado para el deportista {resultado.DeportistaId}",
                         Fecha = DateTime.Now
-                    });
-                    _context.SaveChanges();
+                    };
+                    await _logService.Save(log);
                 }
 
                 return Ok(new { Mensaje = "Resultado agregado correctamente" });
@@ -111,37 +174,24 @@ namespace DavidCardenasAPI.Controllers
                     _logger.LogError($"Error al agregar resultado: {ex.Message}");
                 if (logToDatabase)
                 {
-                    _context.Logs.Add(new Log
+                    LogApi log = new LogApi()
                     {
                         Nivel = "Error",
                         Mensaje = $"Error al agregar resultado: {ex.Message}",
                         Fecha = DateTime.Now
-                    });
-                    _context.SaveChanges();
+                    };
+                    await _logService.Save(log);
                 }
 
                 return StatusCode(500, new { Mensaje = "Error interno del servidor" });
             }
         }
         [HttpGet("ObtenerTablaClasificacion")]
-        public ActionResult<IEnumerable<object>> ObtenerTablaClasificacion()
+        public async Task<ActionResult<IEnumerable<object>>> ObtenerTablaClasificacion()
         {
             try
             {
-                var tabla = _context.Resultados
-                         .GroupBy(r => new { r.Deportista.Pais, r.Deportista.Nombre })
-                         .Select(g => new
-                         {
-                             Pais = g.Key.Pais,
-                             Nombre = g.Key.Nombre,
-                             Arranque = g.Max(r => r.Arranque),
-                             Envion = g.Max(r => r.Envion),
-                             TotalPeso = g.Max(r => r.TotalPeso)
-                         })
-                         .OrderByDescending(d => d.TotalPeso)
-                         .ToList();
-
-                return Ok(tabla);
+                return Ok(await _resultadoService.GetTablaClasificacion());
             }
             catch (Exception ex)
             {
@@ -149,13 +199,13 @@ namespace DavidCardenasAPI.Controllers
                     _logger.LogError($"Error al consultar  ObtenerTablaClasificacion: {ex.Message}");
                 if (logToDatabase)
                 {
-                    _context.Logs.Add(new Log
+                    LogApi log = new LogApi()
                     {
                         Nivel = "Error",
                         Mensaje = $"Error al consultar  ObtenerTablaClasificacion: {ex.Message}",
                         Fecha = DateTime.Now
-                    });
-                    _context.SaveChanges();
+                    };
+                    await _logService.Save(log);
                 }
 
                 return StatusCode(500, new { Mensaje = "Error interno del servidor" });
@@ -163,21 +213,11 @@ namespace DavidCardenasAPI.Controllers
         }
 
         [HttpGet("ObtenerIntentosDeportista")]
-        public ActionResult<IEnumerable<object>> ObtenerIntentosDeportista()
+        public async Task<ActionResult<IEnumerable<object>>> ObtenerIntentosDeportista()
         {
             try
             {
-                var intentos = _context.Resultados
-                .GroupBy(r => r.Deportista.Nombre)
-                .Select(g => new
-                {
-                    Nombre = g.Key,
-                    IntentosArranque = g.Count(r => r.Arranque > 0),
-                    IntentosEnvion = g.Count(r => r.Envion > 0)
-                })
-                .ToList();
-
-                return Ok(intentos);
+                return Ok(await _resultadoService.GetIntentosDeportits());
             }
             catch (Exception ex)
             {
@@ -185,13 +225,13 @@ namespace DavidCardenasAPI.Controllers
                     _logger.LogError($"Error al consultar  ObtenerTablaClasificacion: {ex.Message}");
                 if (logToDatabase)
                 {
-                    _context.Logs.Add(new Log
+                    LogApi log = new LogApi()
                     {
                         Nivel = "Error",
                         Mensaje = $"Error al consultar  ObtenerTablaClasificacion: {ex.Message}",
                         Fecha = DateTime.Now
-                    });
-                    _context.SaveChanges();
+                    };
+                    await _logService.Save(log);
                 }
 
                 return StatusCode(500, new { Mensaje = "Error interno del servidor" });

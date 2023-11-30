@@ -1,4 +1,4 @@
-﻿namespace DavidCardenasAPI.DTOS
+﻿namespace DavidCardenasAPI.Domain.DTOS
 {
     public class DTODeportista
     {

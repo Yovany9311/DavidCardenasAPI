@@ -1,4 +1,4 @@
-﻿namespace DavidCardenasAPI.Models
+﻿namespace DavidCardenasAPI.Domain.Models
 {
     public class LoginModel
     {

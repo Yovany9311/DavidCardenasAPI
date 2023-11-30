@@ -25,7 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Logs\" />
+    <ProjectReference Include="..\DavidCardenasAPI.Business\DavidCardenasAPI.Business.csproj" />
+    <ProjectReference Include="..\DavidCardenasAPI.Security\DavidCardenasAPI.Security.csproj" />
   </ItemGroup>
 
 </Project>

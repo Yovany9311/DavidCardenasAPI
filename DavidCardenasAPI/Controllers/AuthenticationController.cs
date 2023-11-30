@@ -1,10 +1,8 @@
-﻿using DavidCardenasAPI.Context;
-using DavidCardenasAPI.Models;
+﻿using DavidCardenasAPI.Business.Interfaces;
+using DavidCardenasAPI.Domain.Models;
+using DavidCardenasAPI.Security.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
+
 
 namespace DavidCardenasAPI.Controllers
 {
@@ -12,25 +10,27 @@ namespace DavidCardenasAPI.Controllers
     [ApiController]
     public class AuthenticationController : ControllerBase
     {
-        private readonly HalterofiliaContext _context;
         private readonly ILogger<HalterofiliaController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly ILogService _logService;
+        private readonly IAuthenticationJwtServices _authenticationJwtServices;
         bool logToDatabase = false;
         bool logToFile = false;
-        public AuthenticationController(HalterofiliaContext context, ILogger<HalterofiliaController> logger, IConfiguration configuration)
+        public AuthenticationController(ILogger<HalterofiliaController> logger, IConfiguration configuration, ILogService logService, IAuthenticationJwtServices authenticationJwtServices)
         {
-            _context = context;
             _logger = logger;
             _configuration = configuration;
+            _logService = logService;
+            _authenticationJwtServices = authenticationJwtServices;
             logToDatabase = _configuration.GetValue<bool>("Logging:DatabaseLogEnabled");
             logToFile = _configuration.GetValue<bool>("Logging:TextFileLogEnabled");
         }
         [HttpPost("GenerarToken")]
-        public IActionResult GenerarToken()
+        public async Task<IActionResult> GenerarToken()
         {
             try
             {
-                var token = GenerarTokenJWT();
+                var token = await _authenticationJwtServices.GetToken();
 
                 return Ok(new { access_token = token });
             }
@@ -40,40 +40,17 @@ namespace DavidCardenasAPI.Controllers
                     _logger.LogError($"Error al GenerarToken: {ex.Message}");
                 if (logToDatabase)
                 {
-                    _context.Logs.Add(new Log
+                    LogApi log = new LogApi()
                     {
                         Nivel = "Error",
                         Mensaje = $"Error al GenerarToken: {ex.Message}",
                         Fecha = DateTime.Now
-                    });
-                    _context.SaveChanges();
+                    };
+                    await _logService.Save(log);
                 }
 
                 return StatusCode(500, new { Mensaje = "Error interno del servidor" });
             }
-        }
-
-        private string GenerarTokenJWT()
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("JwtSettings").GetSection("Key").Value.ToString()));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, "Halterofilia"),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var token = new JwtSecurityToken(
-                string.Empty,
-                string.Empty,
-                claims,
-                expires: DateTime.Now.AddMinutes(2),
-                signingCredentials: credentials
-            );
-
-            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-            return tokenString;
         }
     }
 }

@@ -1,6 +1,6 @@
-﻿namespace DavidCardenasAPI.Models
+﻿namespace DavidCardenasAPI.Domain.Models
 {
-    public class Log
+    public class LogApi
     {
         public int Id { get; set; }
         public string Nivel { get; set; }

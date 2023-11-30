@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace DavidCardenasAPI.Models
+﻿namespace DavidCardenasAPI.Domain.Models
 {
     public class Deportista
     {
